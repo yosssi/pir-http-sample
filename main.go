@@ -10,6 +10,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const bfSizeChLED = 4096
+
 func main() {
 	if len(os.Args) < 2 {
 		os.Stderr.WriteString("A configuration YAML file path should specified as a command argument.\n")
@@ -29,14 +31,18 @@ func main() {
 		log.Panic(err)
 	}
 
-	log.Printf("%s\n", string(b))
-	log.Printf("%+v\n", conf)
-
 	if err := rpio.Open(); err != nil {
 		log.Panic(err)
 	}
 
 	defer rpio.Close()
+
+	chLED, chLEDDone := ledOn()
+
+	defer func() {
+		close(chLED)
+		<-chLEDDone
+	}()
 
 	pin := rpio.Pin(conf.MotionPinNo)
 	pin.Input()
@@ -46,8 +52,24 @@ func main() {
 	for {
 		if pin.Read() == rpio.High {
 			log.Println("Motion detected")
+			chLED <- struct{}{}
 		}
 
 		time.Sleep(1 * time.Second)
 	}
+}
+
+func ledOn() (chan<- struct{}, <-chan struct{}) {
+	chLED := make(chan struct{}, bfSizeChLED)
+	chLEDDone := make(chan struct{})
+
+	go func() {
+		for _ = range chLED {
+			log.Println("LED on")
+		}
+
+		chLEDDone <- struct{}{}
+	}()
+
+	return chLED, chLEDDone
 }
