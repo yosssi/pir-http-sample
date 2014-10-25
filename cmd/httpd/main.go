@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/julienschmidt/httprouter"
-	"gopkg.in/yaml.v1"
+	"gopkg.in/yaml.v2"
 )
 
 func topIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
