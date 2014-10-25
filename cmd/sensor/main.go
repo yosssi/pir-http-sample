@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"time"
@@ -113,6 +114,14 @@ func send(cnf Config) (chan<- time.Time, <-chan struct{}) {
 	go func() {
 		for t := range chSend {
 			log.Printf("Send motion data [time: %+v]\n", t)
+
+			resp, err := http.PostForm(cnf.HTTPBase+"/motions", nil)
+
+			if err != nil {
+				log.Printf("Error occurred [error: %q]\n", err.Error())
+			}
+
+			log.Printf("%+v\n", resp)
 		}
 
 		chSendDone <- struct{}{}
