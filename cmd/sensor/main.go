@@ -12,6 +12,7 @@ import (
 )
 
 const bfSizeChLED = 4096
+const bfSizeChSend = 4096
 
 func main() {
 	chSig := make(chan os.Signal, 1)
@@ -48,6 +49,13 @@ func main() {
 		<-chLEDDone
 	}()
 
+	chSend, chSendDone := send(cnf)
+
+	defer func() {
+		close(chSend)
+		<-chSendDone
+	}()
+
 	pin := rpio.Pin(cnf.MotionPinNo)
 	pin.Input()
 
@@ -59,8 +67,10 @@ func main() {
 
 	for {
 		if pin.Read() == rpio.High {
+			t := time.Now()
 			log.Println("Motion detected")
 			chLED <- struct{}{}
+			chSend <- t
 		}
 
 		select {
@@ -94,4 +104,15 @@ func ledOn(cnf Config) (chan<- struct{}, <-chan struct{}) {
 	}()
 
 	return chLED, chLEDDone
+}
+
+func send(cnf Config) (chan<- time.Time, <-chan struct{}) {
+	chSend := make(chan time.Time, bfSizeChSend)
+	chSendDone := make(chan struct{})
+
+	for t := range chSend {
+		log.Printf("Send motion data [time: %+v]\n", t)
+	}
+
+	return chSend, chSendDone
 }
