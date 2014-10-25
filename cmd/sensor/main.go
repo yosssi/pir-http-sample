@@ -119,6 +119,7 @@ func send(cnf Config) (chan<- time.Time, <-chan struct{}) {
 
 			if err != nil {
 				log.Printf("Error occurred [error: %q]\n", err.Error())
+				continue
 			}
 
 			log.Printf("%+v\n", resp)
