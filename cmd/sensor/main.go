@@ -110,9 +110,11 @@ func send(cnf Config) (chan<- time.Time, <-chan struct{}) {
 	chSend := make(chan time.Time, bfSizeChSend)
 	chSendDone := make(chan struct{})
 
-	for t := range chSend {
-		log.Printf("Send motion data [time: %+v]\n", t)
-	}
+	go func() {
+		for t := range chSend {
+			log.Printf("Send motion data [time: %+v]\n", t)
+		}
+	}()
 
 	return chSend, chSendDone
 }
