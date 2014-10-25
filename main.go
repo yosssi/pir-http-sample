@@ -46,7 +46,6 @@ func main() {
 	defer func() {
 		close(chLED)
 		<-chLEDDone
-		log.Println("Closed the LED channel")
 	}()
 
 	pin := rpio.Pin(cnf.MotionPinNo)
@@ -55,6 +54,8 @@ func main() {
 	log.Println("Ready")
 
 	ticker := time.NewTicker(1 * time.Second)
+
+	defer ticker.Stop()
 
 	for {
 		if pin.Read() == rpio.High {
