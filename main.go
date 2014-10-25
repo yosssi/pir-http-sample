@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/signal"
 	"time"
 
 	"github.com/stianeikeland/go-rpio"
@@ -13,6 +14,9 @@ import (
 const bfSizeChLED = 4096
 
 func main() {
+	chSig := make(chan os.Signal, 1)
+	signal.Notify(chSig, os.Interrupt, os.Kill)
+
 	if len(os.Args) < 2 {
 		os.Stderr.WriteString("A configuration YAML file path should specified as a command argument.\n")
 		os.Exit(1)
@@ -49,13 +53,20 @@ func main() {
 
 	log.Println("Ready")
 
+	timer := time.NewTimer(1 * time.Second)
+
 	for {
 		if pin.Read() == rpio.High {
 			log.Println("Motion detected")
 			chLED <- struct{}{}
 		}
 
-		time.Sleep(1 * time.Second)
+		select {
+		case <-timer.C:
+		case sig := <-chSig:
+			log.Println("Got signal:", sig)
+			return
+		}
 	}
 }
 
