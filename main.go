@@ -46,6 +46,7 @@ func main() {
 	defer func() {
 		close(chLED)
 		<-chLEDDone
+		log.Println("Closed the LED channel")
 	}()
 
 	pin := rpio.Pin(cnf.MotionPinNo)
@@ -53,7 +54,7 @@ func main() {
 
 	log.Println("Ready")
 
-	timer := time.NewTimer(1 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 
 	for {
 		if pin.Read() == rpio.High {
@@ -62,7 +63,7 @@ func main() {
 		}
 
 		select {
-		case <-timer.C:
+		case <-ticker.C:
 		case sig := <-chSig:
 			log.Println("Got signal:", sig)
 			return
